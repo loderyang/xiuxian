@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>這樣修仙怎麼了</title>
+</head>
+<body>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'STKaiti','KaiTi','Noto Serif SC',serif;background:#070b14;color:#e8dcc8;min-height:100vh;height:100vh;overflow:hidden;}
+  #setupScreen{height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{max-width:600px;width:100%;padding:36px;background:rgba(15,12,35,.85);border-radius:16px;border:1px solid rgba(180,220,255,.12);}
+  .card h1{font-size:30px;margin-bottom:24px;letter-spacing:6px;color:#d4c4a0;text-align:center;}
+  .form-group{margin-bottom:16px;}
+  .form-group label{display:block;font-size:14px;color:#9aacbf;margin-bottom:6px;}
+  .form-group input,.form-group select{width:100%;padding:11px;font-size:15px;border:1px solid rgba(180,220,255,.15);border-radius:8px;background:rgba(10,14,26,.6);color:#e8dcc8;font-family:inherit;}
+  .start-btn{width:100%;padding:14px;font-size:17px;font-weight:bold;background:linear-gradient(135deg,#3a5a40,#2d4a35);color:#d4c4a0;border:1px solid rgba(180,220,255,.15);border-radius:8px;cursor:pointer;font-family:inherit;margin-top:8px;}
+  .instructions{margin-top:16px;padding:12px;background:rgba(10,14,26,.5);border:1px solid rgba(180,220,255,.08);border-radius:8px;font-size:12px;color:#8a9ab0;line-height:1.8;}
+  .instructions ul{padding-left:18px;}
+  #gameScreen{display:none;height:100vh;flex-direction:column;position:relative;overflow:hidden;}
+  #gameScreen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(10,15,35,.7) 60%,rgba(5,8,20,1) 100%);z-index:0;pointer-events:none;}
+  #particles{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;}
+  #particles span{position:absolute;display:block;border-radius:50%;animation:floatUp linear infinite;opacity:0;}
+  @keyframes floatUp{0%{transform:translateY(0) scale(0);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-100vh) scale(1);opacity:0}}
+  .status-bar{position:absolute;top:0;left:0;right:0;min-height:48px;background:rgba(10,8,20,.88);border-bottom:1px solid rgba(180,220,255,.1);display:flex;justify-content:space-between;align-items:center;padding:6px 14px;z-index:100;gap:8px;flex-wrap:wrap;}
+  .status-left{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .overview-tag{padding:3px 8px;border-radius:12px;background:rgba(180,220,255,.08);color:#b8c8e0;font-size:12px;}
+  .status-right{display:flex;gap:8px;}
+  .seek-btn{padding:5px 12px;font-size:12px;letter-spacing:1px;border-radius:20px;background:linear-gradient(135deg,#3a5a40,#2d4a35);color:#d4c4a0;border:1px solid rgba(180,220,255,.15);cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .seek-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .char-info-bar{position:absolute;top:60px;left:0;right:0;z-index:100;display:none;justify-content:center;gap:8px;padding:4px 14px;background:rgba(10,8,20,.8);border-bottom:1px solid rgba(180,220,255,.08);flex-wrap:nowrap;overflow-x:auto;}
+  .char-info-bar.visible{display:flex;}
+  .char-info-item{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+  .char-info-label{font-size:11px;color:#6a7a90;}
+  .char-info-value{font-size:13px;color:#7eb8da;}
+  .trait-edit-wrap{display:flex;align-items:center;gap:4px;}
+  .trait-input{background:rgba(10,14,26,.8);border:1px solid rgba(126,184,218,.4);border-radius:6px;color:#a8d8a8;font-size:13px;font-family:inherit;padding:1px 6px;width:72px;outline:none;}
+  .trait-confirm{padding:1px 8px;font-size:12px;border-radius:6px;background:rgba(58,90,64,.6);color:#d4c4a0;border:1px solid rgba(180,220,255,.15);cursor:pointer;font-family:inherit;}
+  .encounter-bar{position:absolute;left:0;right:0;z-index:99;display:none;justify-content:center;gap:12px;padding:5px 14px;background:rgba(8,6,18,.75);border-bottom:1px solid rgba(180,220,255,.05);flex-wrap:wrap;}
+  .encounter-bar.visible{display:flex;}
+  .encounter-bar .char-info-label{color:#5a6a50;}
+  .encounter-bar .char-info-value{color:#8aac7a;font-size:12px;}
+  .dialogue{position:absolute;left:50%;transform:translateX(-50%);width:90%;max-width:700px;background:rgba(10,8,20,.88);border:1px solid rgba(180,220,255,.12);border-radius:12px;padding:18px;z-index:90;max-height:min(50vh,400px);display:flex;flex-direction:column;}
+  .dialogue-scroll{overflow-y:auto;padding-right:4px;}
+  .dialogue-scroll::-webkit-scrollbar{width:6px;}
+  .dialogue-scroll::-webkit-scrollbar-thumb{background:rgba(126,184,218,.35);border-radius:6px;}
+  .my-say-box{margin-bottom:12px;padding:10px 14px;border:1px solid rgba(126,184,218,.18);border-radius:10px;background:rgba(30,50,80,.45);display:flex;flex-direction:column;align-items:flex-end;}
+  .my-say-title{color:#7eb8da;font-size:11px;margin-bottom:5px;letter-spacing:1px;}
+  .my-say-content{color:#d4e8ff;font-size:14px;line-height:1.7;text-align:right;white-space:pre-wrap;}
+  .speaker{color:#7eb8da;font-size:17px;margin-bottom:8px;font-weight:bold;letter-spacing:2px;}
+  .speaker.narrator{color:#8a9ab0;font-style:italic;}
+  .content{color:#d4c4a0;font-size:15px;line-height:1.8;min-height:50px;white-space:pre-wrap;word-break:break-word;}
+  .state-summary{margin-top:10px;padding-top:8px;border-top:1px solid rgba(180,220,255,.08);display:flex;flex-wrap:wrap;gap:6px;}
+  .state-tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;}
+  .state-tag.mood{background:rgba(180,220,255,.08);border:1px solid rgba(180,220,255,.15);color:#7eb8da;}
+  .state-tag.summary{background:rgba(160,190,140,.08);border:1px solid rgba(160,190,140,.15);color:#8aac7a;}
+  .state-tag.location{background:rgba(210,170,120,.08);border:1px solid rgba(210,170,120,.15);color:#d4b07a;}
+  .panel{position:absolute;left:50%;transform:translateX(-50%);width:90%;max-width:700px;max-height:200px;overflow-y:auto;padding:14px;border-radius:12px;background:rgba(10,8,20,.92);border:1px solid rgba(180,220,255,.12);z-index:95;display:none;}
+  .panel.visible{display:block;}
+  #seekPanel{bottom:430px;}
+  #historyPanel{bottom:240px;}
+  .panel-title{color:#d4c4a0;font-size:14px;margin-bottom:10px;}
+  .panel-empty{color:#8a9ab0;font-size:13px;}
+  .panel-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid rgba(180,220,255,.06);}
+  .panel-item:first-of-type{border-top:none;}
+  .panel-meta{flex:1;display:flex;flex-direction:column;gap:4px;}
+  .panel-name{color:#7eb8da;font-size:13px;font-weight:bold;}
+  .panel-line{display:flex;flex-wrap:wrap;gap:8px;color:#b8c8e0;font-size:12px;}
+  .relock-btn{padding:4px 10px;font-size:12px;border-radius:16px;background:rgba(58,90,64,.5);color:#d4c4a0;border:1px solid rgba(180,220,255,.15);cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .relock-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .input-area{position:absolute;bottom:0;left:0;right:0;padding:14px 18px;background:linear-gradient(to top,rgba(10,8,20,.97),rgba(10,8,20,.8));display:flex;align-items:center;gap:10px;z-index:1000;border-top:1px solid rgba(180,220,255,.06);}
+  .input-area textarea{flex:1;padding:11px 15px;background:rgba(10,14,26,.75);border:1px solid rgba(180,220,255,.12);border-radius:14px;color:#e8dcc8;font-size:15px;outline:none;font-family:inherit;resize:none;line-height:1.5;max-height:100px;overflow-y:auto;}
+  .input-area textarea:focus{border-color:rgba(126,184,218,.5);}
+  .send-btn{width:50px;height:50px;border-radius:12px;font-size:13px;letter-spacing:1px;background:linear-gradient(135deg,#3a5a40,#2d4a35);color:#d4c4a0;border:1px solid rgba(180,220,255,.15);cursor:pointer;font-family:inherit;flex-shrink:0;}
+  .send-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .loading-dots{animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  @media(max-width:768px){.card{padding:20px;}.dialogue{bottom:90px;padding:14px;}#seekPanel{bottom:370px;}#historyPanel{bottom:210px;}.send-btn{width:44px;height:44px;}}
+  </style>
+
+  <div id="setupScreen">
+    <div class="card">
+      <h1>這樣修仙怎麼了</h1>
+      <div class="form-group"><label>道號：</label><input id="playerName" placeholder="請輸入你的道號" /></div>
+      <div class="form-group"><label>性別：</label><select id="playerGender"><option value="男">男</option><option value="女">女</option></select></div>
+      <div class="form-group"><label>年齡：</label><input type="number" id="playerAge" value="18" min="1" max="999" /></div>
+      <button class="start-btn" onclick="startGame()">踏入仙途</button>
+      <div class="instructions"><ul>
+        <li>每次對話會經過一個時段</li>
+        <li>七日為一季，四季輪回後眾人增歲</li>
+        <li>尋人可查看此地當前在場角色</li>
+        <li>點選「可鎖定」才能鎖定追蹤對象</li>
+        <li>傳音欄輸入「特徵詞：XXX」可直接修改鎖定對象特徵</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div id="gameScreen">
+    <div id="particles"></div>
+    <div class="status-bar">
+      <div class="status-left">
+        <span class="overview-tag" id="tagSeason">春季</span>
+        <span class="overview-tag" id="tagTime">清晨</span>
+        <span class="overview-tag" id="tagName">道友</span>
+        <span class="overview-tag" id="tagAge">年紀：--</span>
+        <span class="overview-tag" id="tagCult">修為：0</span>
+      </div>
+      <div class="status-right">
+        <button class="seek-btn" id="btnSeek" onclick="toggleSeek()">尋人</button>
+        <button class="seek-btn" id="btnHistory" onclick="toggleHistory()">歷次鎖定</button>
+        <button class="seek-btn" id="btnUnlock" onclick="unlockCharacter()">解鎖</button>
+      </div>
+    </div>
+    <div class="char-info-bar" id="charInfoBar">
+      <div class="char-info-item"><span class="char-info-label">鎖定</span><span class="char-info-value" id="ciName">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">性別</span><span class="char-info-value" id="ciGender">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">身份</span><span class="char-info-value" id="ciIdentity">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">修為</span><span class="char-info-value" id="ciCult">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">好感</span><span class="char-info-value" id="ciAffection">0</span></div>
+      <div class="char-info-item"><span class="char-info-label">初遇年紀</span><span class="char-info-value" id="ciMeetAge">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">初遇地點</span><span class="char-info-value" id="ciMeetLoc">--</span></div>
+      <div class="char-info-item" id="ciTraitWrap" style="display:none">
+        <span class="char-info-label">特徵</span>
+        <div class="trait-edit-wrap">
+          <input class="trait-input" id="ciTraitInput" maxlength="8" placeholder="特徵詞" />
+          <button class="trait-confirm" onclick="confirmTrait()">改</button>
+        </div>
+      </div>
+    </div>
+    <div class="encounter-bar" id="encounterBar">
+      <div class="char-info-item"><span class="char-info-label">遇見</span><span class="char-info-value" id="encName">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">性別</span><span class="char-info-value" id="encGender">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">身份</span><span class="char-info-value" id="encIdentity">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">修為</span><span class="char-info-value" id="encCult">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">年紀</span><span class="char-info-value" id="encAge">--</span></div>
+      <div class="char-info-item"><span class="char-info-label">初遇地點</span><span class="char-info-value" id="encLoc">--</span></div>
+    </div>
+    <div class="dialogue" id="dialogue">
+      <div class="dialogue-scroll" id="dialogueScroll">
+        <div class="my-say-box" id="mySayBox" style="display:none">
+          <div class="my-say-title">&#128172; 我的傳音</div>
+          <div class="my-say-content" id="mySayContent"></div>
+        </div>
+        <div class="speaker narrator" id="speaker">旁白</div>
+        <div class="content" id="content"><span class="loading-dots">初始化中...</span></div>
+        <div class="state-summary" id="stateSummary" style="display:none">
+          <span class="state-tag mood" id="tagMood" style="display:none"></span>
+          <span class="state-tag summary" id="tagSummaryEl" style="display:none"></span>
+          <span class="state-tag location" id="tagLocation" style="display:none"></span>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="seekPanel">
+      <div class="panel-title">此地附近角色</div>
+      <div id="seekList"></div>
+    </div>
+    <div class="panel" id="historyPanel">
+      <div class="panel-title">歷次鎖定</div>
+      <div id="historyList"></div>
+    </div>
+    <div class="input-area">
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">傳音</button>
+      <textarea id="userInput" rows="1" placeholder="說出你的話語...（Shift+Enter換行）" onkeydown="handleKey(event)"></textarea>
+    </div>
+  </div>
+
+  <script>
+  var PERIODS=['清晨','早晨','中午','午後','黃昏','夜晚'];
+  var SEASONS=['春季','夏季','秋季','冬季'];
+  var OPENING='仙山前，樓閣前，一青白衣少女修仙者，引導欲入宗門的眾人。';
+  var NL='\n';
+  var S={playerName:'',gender:'男',age:'18',cultivation:0,affection:0,time:'清晨',season:'春季',day:1,tick:0,mood:'平靜',summary:'',location:'--',charName:'旁白',lockedName:'',lockedDisplayName:'',lockedAppearance:'',lockedGender:'',lockedIdentity:'',lockedCultivation:'',lockedMeetAge:'--',lockedMeetLoc:'--',lockedTrait:'',encKey:'',encName:'',encGender:'',encIdentity:'',encCult:'',encAge:'--',encLoc:'',nearbyTurns:99,lastReply:'',chatHistory:[],worldChars:[],sceneCharacters:[],lockedHistory:[],disabled:false,worldBuilt:false,pendingNewChars:false,pendingNewCharHint:'',_traitChanged:''};
+  function getDisplayName(n){var w=S.worldChars.find(function(x){return x.name===n;});if(!w)return n;return w.revealed?w.name:(w.appearance||'（身份未知）');}
+  function callAI(instruction,startWith){return new Promise(function(resolve,reject){var result='';var timeout=setTimeout(function(){reject(new Error('AI回應超時'));},120000);oc.ai.textStream({instruction:instruction,startWith:startWith||'',onChunk:function(o){result+=o.text;},onError:function(err){clearTimeout(timeout);reject(new Error(err||'AI錯誤'));},onSuccess:function(){clearTimeout(timeout);resolve(result);}});});}
+  function j(arr){return arr.join(NL);}
+  function buildWorldInstruction(hint){var existing=S.worldChars.map(function(c){return c.name+'（'+c.gender+'，'+c.age+'歲，'+c.cultivation+'，'+c.identity+'）';}).join('；')||'尚無';var a=[];if(hint){a.push('你是修仙世界的人物設定師。情節即將出現新人物，請預先生成其完整資料。');a.push('已有人物：'+existing);a.push('觸發情境：'+hint);a.push('玩家：'+S.playerName+'，'+S.gender+'，'+S.age+'歲，地點：'+S.location);a.push('請生成2~3位即將登場的新人物，需與已有人物有合理關係。');}else{a.push('你是修仙世界的人物設定師。請根據以下開場設定，預先生成所有即將登場人物的完整資料。');a.push('開場設定：'+OPENING);a.push('玩家：'+S.playerName+'，'+S.gender+'，'+S.age+'歲');a.push('請生成開場中的青白衣少女修仙者及相關的2~3位人物。人物設定需與開場設定完全吻合。');}a.push('【重要】只回傳純JSON，不含任何說明或markdown：');a.push('{"characters":[{"name":"姓名2~4字","gender":"男或女","age":"X歲","cultivation":"修為境界","identity":"身份描述","appearance":"外貌特徵20字內","personality":"性格特點20字內","relations":"與其他人物關係","traits":"標誌性細節","trait_word":"2~4字先天性格特徵詞"}]}');a.push('每個值保持簡短，整體JSON在600字以內。');return j(a);}
+  function buildNarrativeInstruction(userMsg,fresh){var revealed=S.worldChars.filter(function(c){return c.revealed;});var hidden=S.worldChars.filter(function(c){return !c.revealed;});var revText=revealed.length?revealed.map(function(c){return '【'+c.name+'】'+c.gender+' '+c.age+' '+c.cultivation+' '+c.identity+'｜性格:'+(c.personality||'')+'｜特徵詞:'+(c.trait_word||'')+'｜關係:'+(c.relations||'')+'｜細節:'+(c.traits||'');}).join(NL):'（無）';var hidText=hidden.length?hidden.map(function(c){return '[key:'+c.worldKey+'] 外貌:'+(c.appearance||'')+'｜'+c.gender+' '+c.age+' '+c.cultivation+' '+c.identity+'｜性格:'+(c.personality||'')+'｜特徵詞:'+(c.trait_word||'')+'｜關係:'+(c.relations||'');}).join(NL):'（無）';var traitCmd='';if(S._traitChanged){traitCmd='【★角色標籤已更新為「'+S._traitChanged+'」★】本回合鎖定對象須出現細微內在感應（心頭一震等），並以此標籤詞為核心演出基調，完全取代舊設定。';}var historyText='';if(!fresh&&S.chatHistory.length>0){var h=S.chatHistory.slice(-8).map(function(m){return (m.role==='user'?'玩家：':'AI：')+m.content.slice(0,200);});historyText=NL+NL+'【近期對話紀錄】'+NL+h.join(NL);}var playerAction=userMsg?(NL+NL+'玩家說：'+userMsg):'';var stateFormat='{"affection":數字,"player_cultivation":數字,"mood":"心境","time":"時段","season":"季節","location":"地點","speaker":"說話者內部真名或旁白","gender":"性別或--","identity":"身份","cultivation":"修為","summary":"摘要","meet_age":"年紀或--","meet_location":"地點或--","scene_chars":[{"worldKey":"","displayName":"外貌描述","gender":"","identity":"","cultivation":"","age":""}],"name_revealed":[],"need_new_chars":false,"new_char_hint":"","trait_word":""}';var a=[];a.push('你是修仙遊戲「這樣修仙怎麼了」的敘事者。請嚴格按照格式回覆。');a.push('');a.push('【玩家資料】');a.push('道號：'+S.playerName+'　性別：'+S.gender+'　年齡：'+S.age+'歲');a.push('修為：'+S.cultivation+'　心境：'+S.mood+'　地點：'+S.location);a.push('季節：'+S.season+'　時段：'+S.time);a.push('已鎖定對象內部名：'+(S.lockedName||'無')+'　顯示名：'+(S.lockedDisplayName||'無')+'　特徵詞：'+(S.lockedTrait||'無'));a.push(traitCmd);a.push('');a.push('【玩家已知姓名的人物】');a.push(revText);a.push('');a.push('【玩家尚未得知姓名的人物（只能以外貌特徵描述，禁止透露其姓名）】');a.push(hidText);a.push('');a.push('【姓名揭露規則】只有以下情況才在name_revealed填入worldKey：1.該人物親口說出自己名字 2.其他人物呼喚其名 3.玩家詢問且對方明確回答');a.push('');a.push('【敘事規則】只能使用已知人物，嚴禁憑空出現新姓名。旁白最多200字。若需新人物：以「某人」帶過，STATE設need_new_chars:true。鎖定對象說話時speaker填其內部真名「'+(S.lockedName||'')+'」。');a.push(historyText);a.push(playerAction);a.push('');a.push('【格式——必須先輸出STATE區塊再輸出對話】');a.push('###STATE');a.push(stateFormat);a.push('###END');a.push('對話內容（200字以內）');a.push('');a.push('時段：清晨/早晨/中午/午後/黃昏/夜晚　季節：春季/夏季/秋季/冬季');return j(a);}
+  async function buildWorld(hint){var instruction=buildWorldInstruction(hint);try{var raw=await callAI(instruction,'{"characters":[');var fullRaw='{"characters":['+raw;var match=fullRaw.match(new RegExp('[\\x7B][^]*[\\x7D]'));if(!match)throw new Error('找不到JSON');var data=JSON.parse(match[0]);if(Array.isArray(data.characters)){data.characters.forEach(function(c,i){var worldKey=c.name+'_'+Date.now()+'_'+i;var exists=S.worldChars.findIndex(function(w){return w.name===c.name;});if(exists>=0)S.worldChars[exists]=Object.assign({},S.worldChars[exists],c);else S.worldChars.push(Object.assign({},c,{worldKey:worldKey,revealed:false}));});}S.worldBuilt=true;S.pendingNewChars=false;S.pendingNewCharHint='';}catch(e){console.error('[World]',e);S.worldBuilt=true;}}
+  function parseResponse(content){var ei=content.lastIndexOf('###END');if(ei===-1)return{ready:false};var si=content.lastIndexOf('###STATE',ei);if(si===-1)return{ready:false};var jsonRaw=content.slice(si+8,ei).trim();var dialogue=content.slice(ei+6).replace(new RegExp('^#+ .*$','gm'),'').trim();var state=null;try{state=JSON.parse(jsonRaw);}catch(e){var m=jsonRaw.match(new RegExp('[\\x7B][^]*[\\x7D]'));if(m)try{state=JSON.parse(m[0]);}catch(e2){}}if(!state)return{ready:false};return{ready:true,state:state,dialogue:dialogue||'...'};}
+  function cleanText(t){return t.replace(new RegExp('###STATE(.|\n|\r)*?###END','g'),'').replace(new RegExp('^#+ .*$','gm'),'').trim()||'靈氣紊亂...';}
+  function updateGameState(state){var loc=state.location||S.location||'--';if(typeof state.affection==='number')S.affection=Math.max(0,Math.min(100,state.affection));if(typeof state.player_cultivation==='number')S.cultivation=Math.max(0,Math.min(100,state.player_cultivation));if(state.mood)S.mood=state.mood;if(state.summary)S.summary=state.summary;if(state.time)S.time=state.time;if(state.season)S.season=state.season;S.location=loc;if(Array.isArray(state.name_revealed)){state.name_revealed.forEach(function(wk){var idx=S.worldChars.findIndex(function(c){return c.worldKey===wk;});if(idx>=0){S.worldChars[idx].revealed=true;if(S.lockedName===S.worldChars[idx].name)S.lockedDisplayName=S.worldChars[idx].name;var si2=S.sceneCharacters.findIndex(function(c){return c.worldKey===wk;});if(si2>=0)S.sceneCharacters[si2].displayName=S.worldChars[idx].name;}});}if(Array.isArray(state.scene_chars)){state.scene_chars.forEach(function(sc){if(!sc.worldKey)return;var wc=S.worldChars.find(function(c){return c.worldKey===sc.worldKey;});var displayName=(wc&&wc.revealed)?wc.name:(sc.displayName||(wc&&wc.appearance)||'???');var entry={worldKey:sc.worldKey,displayName:displayName,name:(wc&&wc.name)||'',gender:sc.gender||(wc&&wc.gender)||'',identity:sc.identity||(wc&&wc.identity)||'',cultivation:sc.cultivation||(wc&&wc.cultivation)||'',age:sc.age||(wc&&wc.age)||'--',location:loc,lastSeenTick:S.tick,isNamed:(wc&&wc.revealed)||false};var idx2=S.sceneCharacters.findIndex(function(c){return c.worldKey===sc.worldKey;});if(idx2>=0)S.sceneCharacters[idx2]=Object.assign({},S.sceneCharacters[idx2],entry);else S.sceneCharacters.unshift(entry);});if(S.sceneCharacters.length>20)S.sceneCharacters.splice(20);}var spInternal=state.speaker||'';var isReal=spInternal&&spInternal!=='旁白'&&spInternal!=='???';if(isReal){var wc2=S.worldChars.find(function(c){return c.name===spInternal;});var spDisplay=wc2?(wc2.revealed?wc2.name:(wc2.appearance||spInternal)):spInternal;var cult=(state.cultivation&&state.cultivation!=='未知')?state.cultivation:'';if(spInternal!==S.lockedName){S.encName=spDisplay;S.encGender=(state.gender==='--')?'':(state.gender||(wc2&&wc2.gender)||S.encGender);S.encIdentity=state.identity||(wc2&&wc2.identity)||S.encIdentity;if(cult)S.encCult=cult;if(state.meet_age&&state.meet_age!=='--')S.encAge=state.meet_age;else if(wc2&&wc2.age)S.encAge=wc2.age;S.encLoc=loc;S.charName='旁白';}else{if(cult&&(!S.lockedCultivation||('推疑約'.indexOf(S.lockedCultivation.charAt(0))>=0)))S.lockedCultivation=cult;if(state.trait_word&&!S._traitChanged){S.lockedTrait=state.trait_word;if(wc2)wc2.trait_word=state.trait_word;}S.charName=S.lockedDisplayName||spDisplay;}S.nearbyTurns=3;var si3=S.sceneCharacters.findIndex(function(c){return c.name===spInternal||c.worldKey===(wc2&&wc2.worldKey);});if(si3>=0)S.sceneCharacters[si3].lastSeenTick=S.tick;}else{S.charName='旁白';if(typeof S.nearbyTurns==='number'&&S.nearbyTurns<99)S.nearbyTurns=Math.max(0,S.nearbyTurns-1);}updateUI();updateMySayBox();}
+  async function requestNarrative(userMsg,fresh){if(userMsg){var tm=userMsg.match(new RegExp('特徵詞[\\uff1a\\x3A]\\s*(.+)'));if(tm&&S.lockedName)applyTrait(tm[1].trim());}var instruction=buildNarrativeInstruction(userMsg,fresh);try{var sw='###STATE'+NL+'{';var raw=await callAI(instruction,sw);var fullRaw=sw+raw;var parsed=parseResponse(fullRaw);if(parsed.ready){updateGameState(parsed.state);showDialogue(parsed.dialogue);if(parsed.state.need_new_chars&&parsed.state.new_char_hint){S.pendingNewChars=true;S.pendingNewCharHint=parsed.state.new_char_hint;}}else{showDialogue(cleanText(fullRaw));}if(userMsg)S.chatHistory.push({role:'user',content:userMsg});S.chatHistory.push({role:'assistant',content:fullRaw});if(S.chatHistory.length>40)S.chatHistory.splice(0,2);S._traitChanged='';}catch(e){showDialogue('靈氣紊亂，請再試一次...\n錯誤：'+e.message);console.error(e);}}
+  function applyTrait(val){if(!val||!S.lockedName)return;S.lockedTrait=val;S._traitChanged=val;var wi=S.worldChars.findIndex(function(w){return w.name===S.lockedName;});if(wi>=0)S.worldChars[wi].trait_word=val;document.getElementById('ciTraitInput').value=val;document.getElementById('ciTraitWrap').style.display='';}
+  function confirmTrait(){var val=document.getElementById('ciTraitInput').value.trim().slice(0,8);if(val)applyTrait(val);}
+  function updateUI(){document.getElementById('tagSeason').textContent=S.season;document.getElementById('tagTime').textContent=S.time;document.getElementById('tagName').textContent=S.playerName||'道友';document.getElementById('tagAge').textContent='年紀：'+(S.age||'--');document.getElementById('tagCult').textContent='修為：'+S.cultivation;var lb=document.getElementById('charInfoBar');if(S.lockedName){lb.classList.add('visible');document.getElementById('ciName').textContent=getDisplayName(S.lockedName);document.getElementById('ciGender').textContent=S.lockedGender||'--';document.getElementById('ciIdentity').textContent=S.lockedIdentity||'--';document.getElementById('ciCult').textContent=S.lockedCultivation||'--';document.getElementById('ciAffection').textContent=S.affection;document.getElementById('ciMeetAge').textContent=S.lockedMeetAge||'--';document.getElementById('ciMeetLoc').textContent=S.lockedMeetLoc||'--';document.getElementById('ciTraitWrap').style.display='';document.getElementById('ciTraitInput').value=S.lockedTrait||'';}else{lb.classList.remove('visible');}var eb=document.getElementById('encounterBar');eb.style.top=(S.lockedName?42:60)+'px';var showEnc=S.encName&&S.encName!==getDisplayName(S.lockedName);if(showEnc){eb.classList.add('visible');document.getElementById('encName').textContent=S.encName;document.getElementById('encGender').textContent=S.encGender||'--';document.getElementById('encIdentity').textContent=S.encIdentity||'--';document.getElementById('encCult').textContent=S.encCult||'--';document.getElementById('encAge').textContent=S.encAge||'--';document.getElementById('encLoc').textContent=S.encLoc||'--';}else{eb.classList.remove('visible');}positionDialogue();var sp=document.getElementById('speaker');sp.textContent=S.charName||'旁白';sp.className='speaker'+(S.charName==='旁白'?' narrator':'');var sm=document.getElementById('stateSummary');sm.style.display=(S.mood||S.summary||S.location)?'flex':'none';var tm2=document.getElementById('tagMood');tm2.textContent=S.mood?'心境：'+S.mood:'';tm2.style.display=S.mood?'':'none';var ts=document.getElementById('tagSummaryEl');ts.textContent=S.summary||'';ts.style.display=S.summary?'':'none';var tl=document.getElementById('tagLocation');tl.textContent=(S.location&&S.location!=='--')?'地點：'+S.location:'';tl.style.display=(S.location&&S.location!=='--')?'':'none';}
+  function updateMySayBox(){var box=document.getElementById('mySayBox');if(S.lastReply){box.style.display='flex';document.getElementById('mySayContent').textContent=S.lastReply;}else box.style.display='none';}
+  function positionDialogue(){var d=document.getElementById('dialogue');var hasL=!!S.lockedName;var hasE=!!(S.encName&&S.encName!==getDisplayName(S.lockedName));d.style.bottom=(110+(hasL?36:0)+(hasE?32:0))+'px';}
+  function showContent(html){document.getElementById('content').innerHTML=html;}
+  function showDialogue(text){document.getElementById('content').textContent=text;document.getElementById('dialogueScroll').scrollTop=0;}
+  function unlockCharacter(){S.lockedName='';S.lockedDisplayName='';S.lockedAppearance='';S.lockedGender='';S.lockedIdentity='';S.lockedCultivation='';S.lockedMeetAge='--';S.lockedMeetLoc='--';S.lockedTrait='';S.charName='旁白';S.summary='已解除當前鎖定';document.getElementById('ciTraitWrap').style.display='none';updateUI();}
+  function closeAllPanels(){document.getElementById('seekPanel').classList.remove('visible');document.getElementById('historyPanel').classList.remove('visible');}
+  function toggleSeek(){var p=document.getElementById('seekPanel'),was=p.classList.contains('visible');closeAllPanels();if(!was){renderSeekPanel();p.classList.add('visible');}}
+  function toggleHistory(){var p=document.getElementById('historyPanel'),was=p.classList.contains('visible');closeAllPanels();if(!was){renderHistoryPanel();p.classList.add('visible');}}
+  function renderSeekPanel(){var vis=S.sceneCharacters.filter(function(e){var recent=typeof e.lastSeenTick==='number'&&S.tick-e.lastSeenTick<=1;var same=!e.location||e.location===S.location||S.location==='--';var notP=e.name!==S.playerName&&e.displayName!==S.playerName;return recent&&same&&notP;});var list=document.getElementById('seekList');if(!vis.length){list.innerHTML='<div class="panel-empty">此時段暫無可見角色</div>';return;}list.innerHTML=vis.map(function(e){var locked=S.lockedHistory.some(function(h){return h.sceneKey===e.worldKey||h.name===e.name;});var label=locked?'已鎖定':'可鎖定';var d=JSON.stringify({name:e.name,worldKey:e.worldKey,appearance:e.displayName,gender:e.gender,identity:e.identity,cultivation:e.cultivation,location:e.location,firstMeetAge:e.age,firstMeetLoc:e.location}).split('"').join('&quot;');return '<div class="panel-item"><button class="relock-btn" '+(locked?'disabled':'')+' onclick=\'relockCharacter('+d+')\'>'+label+'</button><div class="panel-meta"><div class="panel-name">'+e.displayName+'</div><div class="panel-line"><span>性別：'+(e.gender||'--')+'</span><span>身份：'+(e.identity||'--')+'</span></div><div class="panel-line"><span>修為：'+(e.cultivation||'--')+'</span><span>年紀：'+(e.age||'--')+'</span></div></div></div>';}).join('');}
+  function renderHistoryPanel(){var list=document.getElementById('historyList');if(!S.lockedHistory.length){list.innerHTML='<div class="panel-empty">暫無鎖定記錄</div>';return;}list.innerHTML=S.lockedHistory.map(function(e){var wc=S.worldChars.find(function(w){return w.name===e.name;});var showName=(wc&&wc.revealed)?wc.name:(e.appearance||(wc&&wc.appearance)||'（身份未知）');var trait=(wc&&wc.trait_word)||'';var d=JSON.stringify({name:e.name,worldKey:(wc&&wc.worldKey)||'',appearance:e.appearance||(wc&&wc.appearance)||'',gender:e.gender,identity:e.identity,cultivation:e.cultivation,location:e.location,firstMeetAge:e.firstMeetAge,firstMeetLoc:e.firstMeetLoc}).split('"').join('&quot;');var th=trait?'<div class="panel-line"><span style="color:#a8d8a8">特徵：'+trait+'</span></div>':'';return '<div class="panel-item"><button class="relock-btn" onclick=\'relockCharacter('+d+')\'>再次鎖定</button><div class="panel-meta"><div class="panel-name">'+showName+'</div><div class="panel-line"><span>性別：'+(e.gender||'--')+'</span><span>修為：'+(e.cultivation||'--')+'</span><span>好感：'+(e.affection!=null?e.affection:'--')+'</span></div><div class="panel-line"><span>初遇年紀：'+(e.firstMeetAge||'--')+'</span><span>初遇地點：'+(e.firstMeetLoc||'--')+'</span></div>'+th+'</div></div>';}).join('');}
+  function relockCharacter(entry){if(S.disabled)return;closeAllPanels();var wc=S.worldChars.find(function(w){return w.name===entry.name||w.worldKey===entry.worldKey||w.appearance===entry.appearance;});S.lockedName=(wc&&wc.name)||entry.name||'';S.lockedAppearance=(wc&&wc.appearance)||entry.appearance||'';S.lockedDisplayName=(wc&&wc.revealed)?wc.name:((wc&&wc.appearance)||'（身份未知）');S.lockedGender=(wc&&wc.gender)||entry.gender||'';S.lockedIdentity=(wc&&wc.identity)||entry.identity||'';S.lockedCultivation=(wc&&wc.cultivation)||entry.cultivation||'推斷中...';S.lockedMeetAge=entry.firstMeetAge||(wc&&wc.age)||S.encAge||'--';S.lockedMeetLoc=entry.firstMeetLoc||entry.location||S.location||'--';S.lockedTrait=(wc&&wc.trait_word)||'';upsertLockedHistory({name:S.lockedName,appearance:S.lockedAppearance,gender:S.lockedGender,identity:S.lockedIdentity,cultivation:S.lockedCultivation,affection:S.affection,location:entry.location||S.location,firstMeetAge:S.lockedMeetAge,firstMeetLoc:S.lockedMeetLoc,sceneKey:S.lockedName});S.charName='旁白';updateUI();}
+  function upsertLockedHistory(entry){var idx=S.lockedHistory.findIndex(function(c){return c.sceneKey===entry.sceneKey||c.name===entry.name;});if(idx>=0)S.lockedHistory[idx]=Object.assign({},S.lockedHistory[idx],entry,{appearance:S.lockedHistory[idx].appearance||entry.appearance});else S.lockedHistory.unshift(entry);}
+  function setDisabled(v){S.disabled=v;['btnSeek','btnHistory','btnUnlock','sendBtn'].forEach(function(id){document.getElementById(id).disabled=v;});document.getElementById('userInput').disabled=v;}
+  function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}setTimeout(function(){var ta=document.getElementById('userInput');ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,100)+'px';},0);}
+  async function sendMessage(){if(S.disabled)return;var raw=document.getElementById('userInput').value.trim();var msg=raw||'繼續';S.lastReply=msg;document.getElementById('userInput').value='';document.getElementById('userInput').style.height='auto';setDisabled(true);showContent('<span class="loading-dots">...</span>');progressTime();updateUI();closeAllPanels();if(S.pendingNewChars)await buildWorld(S.pendingNewCharHint);await requestNarrative(msg,false);setDisabled(false);}
+  function progressTime(){S.tick++;var pi=S.tick%PERIODS.length,di=Math.floor(S.tick/PERIODS.length);S.time=PERIODS[pi];S.day=(di%7)+1;var si=Math.floor(di/7)%SEASONS.length,prev=S.season;S.season=SEASONS[si];if(prev&&prev!==S.season&&si===0&&di>0)S.age=String(Number(S.age||0)+1);}
+  function generateParticles(){var h='';for(var i=0;i<18;i++){var l=Math.random()*100,sz=2+Math.random()*4,dur=8+Math.random()*14,delay=Math.random()*dur,a=0.15+Math.random()*0.25;h+='<span style="left:'+l+'%;width:'+sz+'px;height:'+sz+'px;background:radial-gradient(circle,rgba(180,220,255,'+a+'),transparent);animation-duration:'+dur+'s;animation-delay:'+delay+'s;bottom:-10px"></span>';}document.getElementById('particles').innerHTML=h;}
+  async function startGame(){S.playerName=document.getElementById('playerName').value.trim();if(!S.playerName){alert('請輸入道號');return;}S.gender=document.getElementById('playerGender').value;S.age=document.getElementById('playerAge').value||'18';Object.assign(S,{chatHistory:[],worldChars:[],sceneCharacters:[],lockedHistory:[],tick:0,day:1,cultivation:0,affection:0,time:'清晨',season:'春季',mood:'平靜',summary:'',location:'--',charName:'旁白',lockedName:'',lockedDisplayName:'',lockedAppearance:'',lockedGender:'',lockedIdentity:'',lockedCultivation:'',lockedMeetAge:'--',lockedMeetLoc:'--',lockedTrait:'',encKey:'',encName:'',encGender:'',encIdentity:'',encCult:'',encAge:'--',encLoc:'',lastReply:'',nearbyTurns:99,worldBuilt:false,pendingNewChars:false,pendingNewCharHint:'',_traitChanged:''});document.getElementById('setupScreen').style.display='none';document.getElementById('gameScreen').style.display='flex';generateParticles();positionDialogue();setDisabled(true);showContent('<span class="loading-dots">靈氣匯聚，世界成形中...</span>');await buildWorld();await requestNarrative('',true);setDisabled(false);}
+  </script>
+</body>
+</html>
